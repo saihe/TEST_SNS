@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html>
+<html ng-app="snsApp">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -8,6 +8,8 @@
   <script src="lib/angular/angular.min.js"></script>
   <script src="lib/onsenui/js/onsenui.min.js"></script>
   <script src="lib/onsenui/js/angular-onsenui.min.js"></script>
+  <!-- 外部ライブラリ -->
+  <script src="lib/3rd/openfb.js"></script>
 
   <link rel="stylesheet" href="components/loader.css">
   <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
@@ -15,30 +17,86 @@
   <link rel="stylesheet" href="css/style.css">
 
   <script>
-    ons.bootstrap()
-      .controller('HelloController', function() {
-        this.world = 'World';
-      });
-    ons.ready(function() {
-      console.log("Onsen UI is ready!");
+    var app = angular.module("snsApp", []);
+    app.controller("snsController", function($scope, $http){
+        
+        /*
+        * Facebook連携
+        */
+        fb_init();
+        var state = checkToken();
+        domState(state);
+        
+        openFB.init({
+            appId: '1804414776482335',
+            tokenStore: window.localStorage,
+            accessToken: window.localStorage.accessToken
+        });
+        $scope.login_fb = function () {
+            openFB.login(function (data) {
+                fb_init();
+                console.trace("token: " + localStorage.fbAccessToken);
+                state = checkToken();
+            }, 
+            {
+                scope: 'email,public_profile'
+            });    
+        }
+        
+        $scope.logout_fb = function () {
+            openFB.logout(function () {
+                fb_init();
+                console.trace("token: " + localStorage.fbAccessToken);
+                state = checkToken();
+                domState(state);
+            });
+        }
+        
+        function fb_init() {
+            openFB.api({path: '/me', 
+                success: function (me) {
+                    domState(state);
+                    /*for(var key in me){
+                        console.trace(key + ": " + me[key]);
+                    }*/
+                },
+                error: function (err) {
+                    domState(state);
+                    /*for(var key in err){
+                        console.trace(key + ": " + err.key);
+                    }*/
+                }
+            }); 
+        }
+        
+        //トークンを保持しているかチェックする
+        //0: 未所持, 1: 所持
+        function checkToken(){
+            var res = 0;
+            if(localStorage.fbAccessToken != undefined && localStorage.fbAccessToken != ""){
+                res = 1;
+            }
+            console.log("loginState: " + res);
+            return res;
+        }
+        
+        //
+        function domState(state){
+            if(state == 0){
+                $scope.state_fb = "logout";
+            }
+            else if(state == 1){
+                $scope.state_fb = "login";
+            }
+        }
     });
   </script>
 </head>
 <body>
-  <ons-page ng-controller="HelloController as hello">
-    <ons-toolbar>
-      <div class="center">Introduction</div>
-    </ons-toolbar>
-
-    <div class="content" style="margin: 10px;">
-      <p>What is your name?</p>
-      <p>
-        <ons-input modifier="underbar" ng-model="hello.world" placeholder="Your name" float></ons-input>
-      </p>
-      <p>
-        Hello, {{ hello.world || 'stranger' }}!
-      </p>
-    </div>
+  <ons-page ng-controller="snsController">
+    <ons-button ng-click="login_fb()">login_Facebook</ons-button>
+    <ons-button ng-click="logout_fb()">logout_Facebook</ons-button>
+    <p>{{state_fb}}</p>
   </ons-page>
 </body>
 </html>
