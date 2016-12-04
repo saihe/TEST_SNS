@@ -1,0 +1,14 @@
+//サーバサイド
+https://auth.login.yahoo.co.jp/yconnect/v1/authorization?
+response_type=code&
+client_id=dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA-&
+redirect_uri=yj-476k4&
+state=hoge
+
+//クライアントサイド
+https://auth.login.yahoo.co.jp/yconnect/v1/authorization?
+response_type=token&
+client_id=dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA-&
+redirect_uri=yj-476k4&
+state=12535342&
+prompt=login
