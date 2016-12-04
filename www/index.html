@@ -9,6 +9,7 @@
   <script src="lib/onsenui/js/onsenui.min.js"></script>
   <script src="lib/onsenui/js/angular-onsenui.min.js"></script>
   <!-- 外部ライブラリ -->
+  <script src="js/fb.js"></script>
   <script src="lib/3rd/openfb.js"></script>
 
   <link rel="stylesheet" href="components/loader.css">
@@ -18,7 +19,31 @@
 
   <script>
     var app = angular.module("snsApp", ["onsen"]);
-    app.controller("snsController", function($scope, $http){
+    
+    app.controller("commonController", function($scope){
+        var msg = "";
+        $scope.showLocalStorage = function(){
+            for(var key in localStorage){
+                msg += key + ": " + localStorage.key + "<br>";
+            }
+            show(msg);
+        }
+        
+        function show(msg){
+            if(msg == ""){
+                msg = "msg is null.";
+            }
+            ons.notification.alert({
+                title: "localStorage",
+                message: msg
+            });
+        }
+    });
+    
+    /*
+    * Facebook連携
+    */
+    app.controller("fbController", function($scope, $http){
         $scope.movePage = function(){
             console.log("move");
             if(checkToken() == 0){
@@ -29,9 +54,6 @@
             }
         }
         
-        /*
-        * Facebook連携
-        */
         fb_init();
         
         openFB.init({
@@ -83,13 +105,113 @@
         }
         
     });
+
+    /*
+    * Yahoo ID連携
+    */
+    app.controller("yhController", function($scope, $http){
+        var url = "https://auth.login.yahoo.co.jp/yconnect/v1/token";
+        window.yconnectInit = function() {
+            YAHOO.JP.yconnect.Authorization.init({
+                button: {
+                    format: "image",
+                    type: "a",
+                    textType:"a",
+                    width: 196,
+                    height: 38,
+                    className: "yconnectLogin"
+                },
+                authorization: {
+                    clientId: "dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA",
+                    redirectUri: "http://tk2-241-30239.vs.sakura.ne.jp/test/test2/yh.html",
+                    scope: "openid email profile",
+                    state: "",
+                    nonce: "",
+                    windowWidth: "500",
+                    windowHeight: "400"
+                },
+                onError: function(res) {
+                    // エラー発生時のコールバック関数
+                },
+                onCancel: function(res) {
+                    // 同意キャンセルされた時のコールバック関数
+                }
+            });
+        };
+        (function(){
+            var fs = document.getElementsByTagName("script")[0], s = document.createElement("script");
+            s.setAttribute("src", "https://s.yimg.jp/images/login/yconnect/auth/1.0.3/auth-min.js");
+            fs.parentNode.insertBefore(s, fs);
+        })();
+        
+        $scope.login_yh = function(){
+            var appId = "dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA-";
+            //Aurthorizationを用いた認可取得
+            var url = "https://auth.login.yahoo.co.jp/yconnect/v1/authorization";
+            /*
+            * 成功したGET
+            * https://auth.login.yahoo.co.jp/yconnect/v1/authorization?
+            *   response_type=token&
+            *   client_id=dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA-&
+            *   redirect_uri=yj-476k4&
+            *   state=hoge
+            */
+            var params = {
+                response_type: "token",
+                client_id: appId,
+                redirect_uri: "yj-476k4",
+                //redirect_uri: "oob",
+                //stateは乱数値
+                state: "123456789"
+            }
+            $http({
+                method: "GET",
+                url: url,
+                params: params
+            })
+            .success(function(res){
+                console.log("success");
+                console.log(typeof res);
+                console.trace(res);
+                /*for(var key in res){
+                    //console.log(key + ": " + res.key);
+                    console.log(key);
+                }*/
+                writePhp(res);
+            })
+            .error(function(err){
+                console.log("err");
+                for(var key in err){
+                    console.log(key + ": " + err.key);
+                }
+            });
+        }
+        
+    });
   </script>
 </head>
 <body>
-  <ons-page ng-controller="snsController">
-    <ons-button ng-click="login_fb()">login_Facebook</ons-button>
-    <ons-button ng-click="logout_fb()">logout_Facebook</ons-button>
-    <ons-button ng-click="movePage()">ページ移動</ons-button>
+  <ons-page>
+    <div stle="text-align: center;">
+        <table>
+            <tr ng-controller="commonController">
+                <td><ons-button ng-click="showLocalStorage()"></ons-button></td>
+            </tr>
+            <tr ng-controller="fbController">
+                <td><ons-button ng-click="login_fb()">login_fb</ons-button></td>
+                <td><ons-button ng-click="logout_fb()">logout_fb</ons-button></td>
+                <td><ons-button ng-click="movePage()">ページ移動</ons-button></td>
+            </tr>
+            <tr ng-controller="yhController">
+                <td><ons-button ng-click="login_yh()" style="colro: green;">login_yh</ons-button></td>
+                <td><ons-button ng-click="logout_yh()">logout_yh</ons-button></td>
+                <td><ons-button ng-click="movePage()">ページ移動</ons-button></td>
+            </tr>
+        </table>
+    </div>
   </ons-page>
+  <!--<ons-page var="page_login_yh">
+    
+  </ons-page>-->
 </body>
 </html>

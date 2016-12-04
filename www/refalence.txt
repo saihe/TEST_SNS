@@ -1,0 +1,5 @@
+AngularJS: 入力フォームにバリデーションを実装する
+http://www.buildinsider.net/web/angularjstips/0014
+
+yahoo app id
+dj0zaiZpPXh4ano1TGlpY3ZpWiZzPWNvbnN1bWVyc2VjcmV0Jng9ODA
